@@ -3,12 +3,10 @@ package com.abhishek.backend.controller;
 import com.abhishek.backend.model.FileDocument;
 import com.abhishek.backend.repository.FileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -23,22 +21,28 @@ public class FileController {
 
     private final FileRepository fileRepository;
 
+    @Value("${file.upload-dir}")
     private String uploadDir;
 
     private final Random random = new Random();
 
+    @GetMapping("/test")
+    public String test() {
+        return "test";
+    }
+
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
 
-        if(file.isEmpty()){
-            return ResponseEntity.badRequest().body("Empty file");
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is empty");
         }
 
-        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
-        String storedFileName = UUID.randomUUID().randomUUID() + "_" + originalFileName;
+        String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
+        String storedFileName = UUID.randomUUID() + "_" + originalFilename;
 
         File uploadPath = new File(uploadDir);
-        if(!uploadPath.exists()){
+        if (!uploadPath.exists()) {
             uploadPath.mkdirs();
         }
 
@@ -48,7 +52,7 @@ public class FileController {
         String pin = String.format("%06d", random.nextInt(999999));
 
         FileDocument document = FileDocument.builder()
-                .originalFileName(originalFileName)
+                .originalFileName(originalFilename)
                 .storedFileName(storedFileName)
                 .pin(pin)
                 .uploadTime(LocalDateTime.now())
