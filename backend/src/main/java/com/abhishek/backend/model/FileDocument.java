@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Document
+@Document(collection = "files")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,5 +21,7 @@ public class FileDocument {
     private String originalFileName;
     private String storedFileName;
     private String pin;
+    private String filePath;
     private LocalDateTime uploadTime;
+    private LocalDateTime expireTime;
 }
