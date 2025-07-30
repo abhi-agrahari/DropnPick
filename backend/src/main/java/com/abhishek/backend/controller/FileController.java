@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -35,25 +35,32 @@ public class FileController {
     }
 
     @GetMapping("/download/{pin}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String pin) throws IOException {
-        System.out.println("Received download request for PIN: " + pin);
-
+    public ResponseEntity<?> downloadFile(@PathVariable String pin) throws IOException {
         FileDocument doc = fileService.getFileByPin(pin);
-        if (doc == null) {
+
+        if(doc == null) {
             System.out.println("No file found for PIN: " + pin);
             return ResponseEntity.notFound().build();
         }
 
-        Path path = Paths.get(doc.getFilePath());
-        Resource resource = new UrlResource(path.toUri());
-
-        if (!resource.exists()) {
-            System.out.println("File not found on disk: " + path.toString());
-            return ResponseEntity.notFound().build();
+        if(doc.getExpireTime().isBefore(LocalDateTime.now())) {
+            return ResponseEntity
+                    .status(HttpStatus.GONE)
+                    .body("File has expired and is no longer available.");
         }
+
+        Path path = Paths.get(doc.getFilePath());
+
+        if(!Files.exists(path)) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("File does not exist on disk.");
+        }
+
+        byte[] fileBytes = Files.readAllBytes(path);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + doc.getOriginalFileName() + "\"")
-                .body(resource);
+                .body(fileBytes);
     }
 }
