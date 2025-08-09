@@ -18,10 +18,15 @@ public class FileDocument {
 
     @Id
     private String id;
+
     private String originalFileName;
     private String storedFileName;
     private String pin;
     private String filePath;
+
     private LocalDateTime uploadTime;
     private LocalDateTime expireTime;
+
+    private int downloadLimit;
+    private int downloadsLeft;
 }

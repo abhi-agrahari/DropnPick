@@ -8,7 +8,6 @@ import java.io.IOException;
 
 @Service
 public interface FileService {
-    String uploadFile(MultipartFile file) throws IOException;
-
-    FileDocument getFileByPin(String id);
+    String uploadFile(MultipartFile file, int downloadLimit, int timeLimitHours) throws IOException;
+    FileDocument getFileByPin(String pin);
 }

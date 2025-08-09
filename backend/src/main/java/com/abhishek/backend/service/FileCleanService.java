@@ -24,21 +24,25 @@ public class FileCleanService {
         this.fileRepository = fileRepository;
     }
 
-    @Scheduled(fixedRate = 24*3600000)
+    @Scheduled(fixedRate = 24 * 3600000) // every 24 hours
     public void cleanUp() {
-        List<FileDocument> expiredFiles = fileRepository.findAll()
+        LocalDateTime now = LocalDateTime.now();
+
+        List<FileDocument> filesToDelete = fileRepository.findAll()
                 .stream()
-                .filter(file -> file.getExpireTime().isBefore(LocalDateTime.now()))
+                .filter(file ->
+                        file.getExpireTime().isBefore(now) || // expired by time
+                                file.getDownloadsLeft() <= 0          // no downloads left
+                )
                 .toList();
 
-        for(FileDocument expiredFile : expiredFiles) {
+        for (FileDocument file : filesToDelete) {
             try {
-                Path path = Paths.get(expiredFile.getFilePath());
+                Path path = Paths.get(file.getFilePath());
                 Files.deleteIfExists(path);
-                fileRepository.delete(expiredFile);
-            }
-            catch (Exception e) {
-                System.err.println("Failed to delete file: " + expiredFile.getOriginalFileName());
+                fileRepository.delete(file);
+            } catch (Exception e) {
+                System.err.println("Failed to delete file: " + file.getOriginalFileName() + " -> " + e.getMessage());
             }
         }
     }

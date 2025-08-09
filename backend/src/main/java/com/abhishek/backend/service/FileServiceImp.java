@@ -4,12 +4,7 @@ import com.abhishek.backend.model.FileDocument;
 import com.abhishek.backend.repository.FileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -29,17 +24,14 @@ public class FileServiceImp implements FileService {
     private FileRepository fileRepository;
 
     @Override
-    public String uploadFile(MultipartFile file) throws IOException {
-
+    public String uploadFile(MultipartFile file, int downloadLimit, int hoursToExpire) throws IOException, IOException {
         String originalFilename = file.getOriginalFilename();
         String storedFileName = UUID.randomUUID() + "_" + originalFilename;
 
         Path path = Paths.get(uploadDir, storedFileName);
-
         Files.write(path, file.getBytes());
 
         String pin = generatePin();
-
         LocalDateTime now = LocalDateTime.now();
 
         FileDocument document = FileDocument.builder()
@@ -48,7 +40,9 @@ public class FileServiceImp implements FileService {
                 .pin(pin)
                 .filePath(path.toString())
                 .uploadTime(now)
-                .expireTime(now.plusHours(24))
+                .expireTime(now.plusHours(hoursToExpire))
+                .downloadLimit(downloadLimit)
+                .downloadsLeft(downloadLimit)
                 .build();
 
         fileRepository.save(document);
